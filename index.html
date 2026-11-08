@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vertex circles in motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F5F7;--grid:rgba(30,60,90,.075);--ink:#14212E;--ink-2:#4A5B6B;--ink-3:#7D8B98;
+  --rule:#D3DBE2;--rule-2:#A9B6C2;--panel:#FFFFFF;--panel-2:#EEF2F5;--accent:#0B6E8F;--accent-bg:#DCEEF4;
+  --pos:#C2367A;--neg:#1F8A5B;--warn:#B7791F;--vel:#D9480F;--blue:#2F6FD0;
+  --c-foot:#D9480F;--c-knee:#B7791F;--c-hand:#6D5BD0;--c-hip:#1F8A5B;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"Spline Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E161D;--grid:rgba(160,200,230,.06);--ink:#E3EAF0;--ink-2:#A7B5C2;--ink-3:#73828F;
+  --rule:#22313D;--rule-2:#3A4C5B;--panel:#131E27;--panel-2:#1A2833;--accent:#5FB8D6;--accent-bg:#14303C;
+  --pos:#E86AA6;--neg:#4CC48B;--warn:#E0A84A;--vel:#F27A45;--blue:#6FA3F0;
+  --c-foot:#F27A45;--c-knee:#E0A84A;--c-hand:#9D8FF0;--c-hip:#4CC48B;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E161D;--grid:rgba(160,200,230,.06);--ink:#E3EAF0;--ink-2:#A7B5C2;--ink-3:#73828F;
+  --rule:#22313D;--rule-2:#3A4C5B;--panel:#131E27;--panel-2:#1A2833;--accent:#5FB8D6;--accent-bg:#14303C;
+  --pos:#E86AA6;--neg:#4CC48B;--warn:#E0A84A;--vel:#F27A45;--blue:#6FA3F0;
+  --c-foot:#F27A45;--c-knee:#E0A84A;--c-hand:#9D8FF0;--c-hip:#4CC48B;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background-color:var(--paper);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:190px minmax(0,1fr);gap:40px}
+nav.side{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding:40px 0;font-family:var(--sans);font-size:14px}
+nav.side p{margin:0 0 10px;color:var(--ink-3);font-size:13px}
+nav.side a{display:block;padding:6px 0 6px 12px;border-left:2px solid var(--rule);color:var(--ink-2);text-decoration:none}
+nav.side a:hover{color:var(--ink);border-left-color:var(--rule-2)}
+nav.side a.on{color:var(--accent);border-left-color:var(--accent);font-weight:500}
+main{padding:40px 0 80px;min-width:0}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:32px;align-items:center;padding:8px 0 48px;border-bottom:1px solid var(--rule)}
+h1{font-size:clamp(40px,6vw,64px);line-height:1.02;font-weight:500;letter-spacing:-0.02em;margin:0 0 18px}
+.lede{font-size:20px;color:var(--ink-2);margin:0 0 22px;max-width:34ch}
+.formula{font-family:var(--serif);font-size:clamp(26px,3.4vw,34px);margin:0;color:var(--ink)}
+.formula small{display:block;font-family:var(--sans);font-size:14px;color:var(--ink-3);margin-top:6px}
+section{padding:56px 0 8px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+h2{font-size:34px;line-height:1.15;font-weight:500;margin:0 0 12px;letter-spacing:-0.01em}
+h3{font-family:var(--sans);font-size:16px;font-weight:600;margin:28px 0 8px}
+p{max-width:68ch;margin:0 0 14px}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:16px;margin:20px 0;font-family:var(--sans);font-size:14px;line-height:1.45}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.ctl .lab{color:var(--ink-3);min-width:62px;font-size:13px}
+button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--rule-2);border-radius:5px;padding:6px 11px;cursor:pointer;min-height:32px}
+button:hover{background:var(--panel-2)}
+button[aria-pressed="true"]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+input[type=range]{accent-color:var(--accent);flex:1;min-width:120px}
+svg.fig{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+svg text{font-family:var(--sans)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:12px 0}
+.metrics div{background:var(--panel-2);border-radius:6px;padding:8px 10px}
+.metrics span{display:block;font-size:12px;color:var(--ink-3)}
+.metrics b{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:13.5px;font-variant-numeric:tabular-nums}
+th{font-weight:500;color:var(--ink-3);text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tr.sel td{background:var(--accent-bg);color:var(--accent)}
+.static table{font-size:14px}
+.static{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:6px 14px 10px;margin:14px 0 24px}
+.key{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink-2);margin:8px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.note{font-size:14px;color:var(--ink-2);margin:6px 0 0}
+.plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:12px}
+footer{font-family:var(--sans);font-size:13.5px;color:var(--ink-3);padding:32px 0 0}
+footer p{max-width:72ch}
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;gap:0}
+  nav.side{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0;margin:0 -20px;padding-left:20px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--rule);top:env(safe-area-inset-top,0px)}
+  nav.side p{display:none}
+  nav.side a{border-left:0;border-bottom:2px solid transparent;padding:6px 10px;white-space:nowrap}
+  nav.side a.on{border-bottom-color:var(--accent)}
+  header.hero{grid-template-columns:1fr}
+  main{padding-top:24px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="side" aria-label="Sections">
+  <p>On this page</p>
+  <a href="#circle">The vertex circle</a>
+  <a href="#eyebrow">Eyebrow</a>
+  <a href="#speed">Speed and prediction</a>
+  <a href="#hip">Hip path by gait</a>
+  <a href="#limbs">Leg, hand and body</a>
+</nav>
+<main>
+<header class="hero" id="circle">
+  <div>
+    <h1>Vertex circles in motion</h1>
+    <p class="lede">One circle through three neighbouring points measures how sharply a path bends. Here it follows an eyebrow, a runner’s hip, and every swinging limb.</p>
+    <p class="formula">κ<sub>k</sub> = 2 sin φ<sub>k</sub> ⁄ ‖γ<sub>k+1</sub> − γ<sub>k−1</sub>‖<small>Vertex osculating circle, Bobenko, Discrete Differential Geometry, §2.3.1</small></p>
+  </div>
+  <div class="panel" style="margin:0">
+    <svg class="fig" id="h-svg" viewBox="0 0 420 300" role="img" aria-label="Three points with the circle passing through them; drag the middle point"></svg>
+    <div class="metrics" id="h-met"></div>
+    <p class="note">Drag the middle point γ<sub>1</sub>. A straight line gives κ = 0; a sharp corner gives a tiny circle.</p>
+  </div>
+</header>
+
+<section id="eyebrow">
+  <h2>Eyebrow</h2>
+  <p>The eyebrow is a discrete curve of seven points γ₀ … γ₆, with γ₀ at the inner end near the nose. It moves smoothly between three poses: neutral, surprised and angry. Units are centimetres.</p>
+  <div class="panel">
+    <div class="ctl"><button id="e-play">Pause</button><span class="lab">Time</span><input type="range" id="e-t" min="0" max="4" step="0.01" value="0"><span id="e-tl" style="min-width:170px;font-weight:500"></span></div>
+    <div class="ctl"><span class="lab">Circle at</span><span id="e-vb"></span></div>
+    <svg class="fig" id="e-svg" viewBox="0 0 680 340" role="img" aria-label="Animated eyebrow with osculating circle and velocity arrows"></svg>
+    <div class="metrics" id="e-met"></div>
+    <div class="tbl"><table><thead><tr><th>k</th><th>x (cm)</th><th>y (cm)</th><th>dx/dt</th><th>dy/dt</th><th>speed (cm/s)</th><th>φ</th><th>κ (1/cm)</th></tr></thead><tbody id="e-tb"></tbody></table></div>
+  </div>
+  <h3>Key poses</h3>
+  <div class="static"><div class="tbl"><table>
+    <thead><tr><th>Vertex</th><th>Neutral</th><th>Surprised</th><th>Angry</th></tr></thead>
+    <tbody>
+      <tr><td>γ₀</td><td>(0, 0)</td><td>(0, 0.50)</td><td>(0.30, −0.40)</td></tr>
+      <tr><td>γ₁</td><td>(1, 0.35)</td><td>(1, 1.15)</td><td>(1.20, 0)</td></tr>
+      <tr><td>γ₂</td><td>(2, 0.60)</td><td>(2, 1.60)</td><td>(2.10, 0.40)</td></tr>
+      <tr><td>γ₃</td><td>(3, 0.75)</td><td>(3, 1.85)</td><td>(3, 0.70)</td></tr>
+      <tr><td>γ₄</td><td>(4, 0.80)</td><td>(4, 1.80)</td><td>(4, 0.85)</td></tr>
+      <tr><td>γ₅</td><td>(5, 0.60)</td><td>(5, 1.40)</td><td>(5, 0.65)</td></tr>
+      <tr><td>γ₆</td><td>(6, 0.20)</td><td>(6, 0.70)</td><td>(6, 0.25)</td></tr>
+      <tr><td>κ₃ at the arch</td><td>−0.098 (R 10.2 cm)</td><td>−0.289 (R 3.5 cm)</td><td>−0.176 (R 5.7 cm)</td></tr>
+    </tbody></table></div></div>
+  <p>From neutral to surprised in one second, γ₃ rises 1.10 cm. The average rate is 1.10 cm/s, and with smooth easing the peak rate is 1.10 × π ⁄ 2 ≈ 1.73 cm/s. The arch curvature changes by about −0.19 cm⁻¹ over that second.</p>
+</section>
+
+<section id="speed">
+  <h2>Speed and prediction</h2>
+  <p>A person moves along a track with position x(t) = v₀t + ½at². The faded figures show the predicted positions one, two and three seconds ahead, using x(t + Δt) = x + vΔt + ½aΔt². When slowing down, the person stops at x + v² ⁄ (2|a|).</p>
+  <div class="panel">
+    <div class="ctl"><span class="lab">Gait</span><span id="r-gb"></span></div>
+    <div class="ctl"><span class="lab">Speed</span><span id="r-pb"></span></div>
+    <div class="ctl"><button id="r-play">Pause</button><button id="r-rst">Restart</button><input type="range" id="r-t" min="0" max="10" step="0.05" value="0"><span id="r-tl" style="min-width:64px;font-weight:500"></span></div>
+    <svg class="fig" id="r-svg" viewBox="0 0 680 190" role="img" aria-label="Runner on a track with predicted future positions"></svg>
+    <div class="metrics" id="r-met"></div>
+    <div class="tbl"><table><thead><tr><th>Prediction</th><th>time (s)</th><th>x (m)</th><th>v (m/s)</th><th>Δx from now (m)</th></tr></thead><tbody id="r-tb"></tbody></table></div>
+    <div class="plots"><svg id="r-px" viewBox="0 0 320 170" role="img" aria-label="Position over time"></svg><svg id="r-pv" viewBox="0 0 320 170" role="img" aria-label="Speed over time"></svg></div>
+    <div class="key"><span><span class="dot" style="background:var(--blue)"></span>actual so far</span><span><span class="dot" style="background:var(--vel)"></span>predicted next 3 s</span></div>
+  </div>
+  <h3>Gait settings</h3>
+  <div class="static"><div class="tbl"><table>
+    <thead><tr><th>Gait</th><th>Start speed</th><th>Step length</th><th>Cadence</th><th>Distance in 10 s at constant speed</th></tr></thead>
+    <tbody>
+      <tr><td>Walking</td><td>1.4 m/s (5.0 km/h)</td><td>0.75 m</td><td>112 steps/min</td><td>14 m</td></tr>
+      <tr><td>Jogging</td><td>2.5 m/s (9.0 km/h)</td><td>1.0 m</td><td>150 steps/min</td><td>25 m</td></tr>
+      <tr><td>Running</td><td>4.5 m/s (16.2 km/h)</td><td>1.4 m</td><td>193 steps/min</td><td>45 m</td></tr>
+    </tbody></table></div></div>
+  <h3>Worked example: jogging, at t = 4 s</h3>
+  <div class="static"><div class="tbl"><table>
+    <thead><tr><th>Case</th><th>a (m/s²)</th><th>x now</th><th>v now</th><th>x at t + 1, 2, 3 s</th></tr></thead>
+    <tbody>
+      <tr><td>Constant speed</td><td>0</td><td>10.00 m</td><td>2.5 m/s</td><td>12.50, 15.00, 17.50 m</td></tr>
+      <tr><td>Speeding up</td><td>+0.3</td><td>12.40 m</td><td>3.7 m/s</td><td>16.25, 20.40, 24.85 m</td></tr>
+      <tr><td>Slowing down</td><td>−0.3</td><td>7.60 m</td><td>1.3 m/s</td><td>8.75, 9.60, 10.15 m (stops at 10.42 m)</td></tr>
+    </tbody></table></div></div>
+</section>
+
+<section id="hip">
+  <h2>Hip path by gait</h2>
+  <p>Seen from the side, the hip traces a wavy path. It is sampled ten times per step, and each vertex gets its own circle. The picture is at true scale, so the circles can be compared with the body.</p>
+  <div class="panel">
+    <div class="ctl"><span class="lab">Gait</span><span id="p-gb"></span></div>
+    <div class="ctl"><button id="p-play">Play</button><input type="range" id="p-v" min="1" max="19" step="1" value="5"><span id="p-vl" style="min-width:36px;font-weight:500"></span><button id="p-all" aria-pressed="false">Show all circles</button></div>
+    <svg class="fig" id="p-svg" viewBox="0 0 680 350" role="img" aria-label="Hip path with vertex osculating circle"></svg>
+    <div class="key"><span><span class="dot" style="background:var(--neg)"></span>κ &lt; 0, centre below (hip arcs over)</span><span><span class="dot" style="background:var(--pos)"></span>κ &gt; 0, centre above (hip dips)</span><span><span class="dot" style="background:var(--warn)"></span>sharp corner (step transition)</span></div>
+    <div class="metrics" id="p-met"></div>
+    <p class="note" id="p-note"></p>
+    <svg id="p-kb" viewBox="0 0 680 170" style="display:block;width:100%;height:auto;margin-top:10px" role="img" aria-label="Curvature at each vertex"></svg>
+  </div>
+  <h3>Key values</h3>
+  <div class="static"><div class="tbl"><table>
+    <thead><tr><th>Gait</th><th>Phase</th><th>κ (1/m)</th><th>R (m)</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Walking</td><td>Single stance</td><td>−1.05</td><td>0.95</td><td>Centre on the foot; R is the leg length</td></tr>
+      <tr><td>Walking</td><td>Step transition</td><td>+8.86</td><td>0.11</td><td>Corner where weight switches legs</td></tr>
+      <tr><td>Jogging</td><td>Stance, lowest point</td><td>+1.92</td><td>0.52</td><td>Leg compresses like a spring</td></tr>
+      <tr><td>Jogging</td><td>Flight, top</td><td>−1.56</td><td>0.64</td><td>Free fall, κ ≈ g ⁄ v² = 1.57</td></tr>
+      <tr><td>Running</td><td>Stance, lowest point</td><td>+1.08</td><td>0.93</td><td>Shallower dip than jogging</td></tr>
+      <tr><td>Running</td><td>Flight, top</td><td>−0.48</td><td>2.07</td><td>Free fall, κ ≈ g ⁄ v² = 0.48</td></tr>
+    </tbody></table></div></div>
+</section>
+
+<section id="limbs">
+  <h2>Leg, hand and body</h2>
+  <p>Each joint on the right side of the body is sampled sixteen times per stride. The circle through its last, current and next sample shows how sharply that joint is turning right now. Use the arrows to step one vertex at a time.</p>
+  <div class="panel">
+    <div class="ctl"><span class="lab">Gait</span><span id="l-gb"></span></div>
+    <div class="ctl"><span class="lab">View</span><span id="l-vb"></span></div>
+    <div class="ctl"><span class="lab">Track</span><span id="l-jb"></span></div>
+    <div class="ctl"><button id="l-play">Pause</button><button id="l-prev" aria-label="Previous vertex">‹</button><button id="l-next" aria-label="Next vertex">›</button><span class="lab" style="min-width:0">Slow motion</span><input type="range" id="l-sp" min="0.05" max="1" step="0.05" value="0.2"><span id="l-spl" style="min-width:40px;font-weight:500"></span></div>
+    <svg class="fig" id="l-svg" viewBox="0 0 680 360" role="img" aria-label="Stick figure with joint paths and osculating circles"></svg>
+    <div class="tbl"><table><thead><tr><th>Joint (right side)</th><th>x (m)</th><th>y (m)</th><th>speed (m/s)</th><th>φ</th><th>κ (1/m)</th><th>R (m)</th></tr></thead><tbody id="l-tb"></tbody></table></div>
+    <p class="note" id="l-info"></p>
+  </div>
+  <h3>What each joint shows</h3>
+  <div class="static"><div class="tbl"><table>
+    <thead><tr><th>Joint</th><th>Path (treadmill view)</th><th>Where circles are small</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Foot</td><td>Long teardrop loop</td><td>Heel lift and reach before landing</td><td>Spotting over-striding</td></tr>
+      <tr><td>Knee</td><td>Smaller loop</td><td>Peak bend in swing</td><td>Left–right symmetry in rehab</td></tr>
+      <tr><td>Hand</td><td>Pendulum arc</td><td>Bent elbow in jog and run</td><td>Smartwatch activity detection</td></tr>
+      <tr><td>Hip</td><td>Tiny loop, 2 cm × 5–9 cm</td><td>Everywhere; it barely moves</td><td>Bounce and efficiency</td></tr>
+    </tbody></table></div></div>
+  <p>In the ground view, a planted foot stands still. Its neighbouring vertices land on the same spot, so no circle exists there and the table shows “planted”.</p>
+</section>
+
+<footer>
+  <p>All motion here comes from idealised models: an inverted pendulum for walking, a spring and free fall for jogging and running, and smooth joint-angle patterns for the limbs. The eyebrow poses are illustrative values, not measurements. The curvature formula is exact, so the circles are true vertex osculating circles of the sampled points.</p>
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=id=>document.getElementById(id);
+const D=Math.PI/180;
+function curv(a,b,c){const d1=[b[0]-a[0],b[1]-a[1]],d2=[c[0]-b[0],c[1]-b[1]];const l1=Math.hypot(d1[0],d1[1]),l2=Math.hypot(d2[0],d2[1]);const phi=Math.atan2(d1[0]*d2[1]-d1[1]*d2[0],d1[0]*d2[0]+d1[1]*d2[1]);return {phi,k:2*Math.sin(phi)/Math.hypot(c[0]-a[0],c[1]-a[1]),deg:Math.min(l1,l2)<0.008}}
+function cen(a,b,c){const Dd=2*(a[0]*(b[1]-c[1])+b[0]*(c[1]-a[1])+c[0]*(a[1]-b[1]));if(Math.abs(Dd)<1e-12)return null;const A=a[0]*a[0]+a[1]*a[1],B=b[0]*b[0]+b[1]*b[1],C=c[0]*c[0]+c[1]*c[1];return [(A*(b[1]-c[1])+B*(c[1]-a[1])+C*(a[1]-b[1]))/Dd,(A*(c[0]-b[0])+B*(a[0]-c[0])+C*(b[0]-a[0]))/Dd]}
+function seg(el,opts,get,set,multi){el.innerHTML='';Object.keys(opts).forEach(k=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.style.marginRight='6px';b.style.marginBottom='4px';b.innerHTML=(opts[k].c?`<span class="dot" style="background:${opts[k].c}"></span>`:'')+opts[k].n;b.onclick=()=>set(k);el.appendChild(b)});return ()=>el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(get(b.dataset.k))))}
+function playBtn(btn,m){const upd=()=>btn.textContent=m.playing?'Pause':'Play';btn.onclick=()=>{m.playing=!m.playing;upd()};upd();return upd}
+function met(el,items){el.innerHTML=items.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}
+const mods=[];
+
+/* ---------- Hero: drag the middle point ---------- */
+(function(){
+  const svg=$('h-svg'),S=38,ox=20,oy=280;const X=x=>ox+x*S,Y=y=>oy-y*S;
+  let P=[[1.2,1.6],[5,4.4],[9.2,2.2]],drag=false;
+  function draw(){const [a,b,c]=P,cv=curv(a,b,c),cc=cen(a,b,c);let h=`<defs><clipPath id="hcl"><rect width="420" height="300"/></clipPath><marker id="hm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink-3)"/></marker></defs>`;
+    for(let i=0;i<=10;i++)h+=`<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(7)}" stroke="var(--rule)" stroke-width="0.6"/>`;for(let j=0;j<=7;j++)h+=`<line x1="${X(0)}" y1="${Y(j)}" x2="${X(10)}" y2="${Y(j)}" stroke="var(--rule)" stroke-width="0.6"/>`;
+    h+='<g clip-path="url(#hcl)">';
+    if(cc&&Math.abs(cv.k)>1e-3){const R=1/Math.abs(cv.k);h+=`<circle cx="${X(cc[0])}" cy="${Y(cc[1])}" r="${R*S}" fill="none" stroke="var(--accent)" stroke-width="2"/><line x1="${X(b[0])}" y1="${Y(b[1])}" x2="${X(cc[0])}" y2="${Y(cc[1])}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 3"/><circle cx="${X(cc[0])}" cy="${Y(cc[1])}" r="4" fill="var(--accent)"/>`}
+    const ex=[b[0]+(b[0]-a[0])*0.6,b[1]+(b[1]-a[1])*0.6];h+=`<line x1="${X(b[0])}" y1="${Y(b[1])}" x2="${X(ex[0])}" y2="${Y(ex[1])}" stroke="var(--ink-3)" stroke-dasharray="3 3" marker-end="url(#hm)"/>`;
+    h+='</g>';
+    h+=`<polyline points="${P.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2.5"/>`;
+    P.forEach((p,i)=>h+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${i==1?9:6}" fill="${i==1?'var(--accent)':'var(--panel)'}" stroke="var(--ink)" stroke-width="2" ${i==1?'style="cursor:grab" tabindex="0" role="slider" aria-label="Middle point; use arrow keys to move"':''} data-i="${i}"/><text x="${X(p[0])}" y="${Y(p[1])-14}" text-anchor="middle" style="font-size:13px;fill:var(--ink-2)">γ${i}</text>`);
+    h+=`<text x="${X(ex[0])+6}" y="${Y(ex[1])}" style="font-size:13px;fill:var(--ink-3)">φ = ${(cv.phi/D).toFixed(1)}°</text>`;
+    svg.innerHTML=h;
+    met($('h-met'),[['γ₁ (x, y)',`(${b[0].toFixed(2)}, ${b[1].toFixed(2)})`],['Turning angle φ',(cv.phi/D).toFixed(1)+'°'],['Curvature κ',cv.k.toFixed(3)],['Radius R',Math.abs(cv.k)<1e-3?'∞':(1/Math.abs(cv.k)).toFixed(2)]]);
+    const kn=svg.querySelector('[data-i="1"]');kn.addEventListener('keydown',e=>{const d={ArrowLeft:[-.2,0],ArrowRight:[.2,0],ArrowUp:[0,.2],ArrowDown:[0,-.2]}[e.key];if(d){e.preventDefault();P[1]=[Math.max(0,Math.min(10,P[1][0]+d[0])),Math.max(0,Math.min(7,P[1][1]+d[1]))];draw();svg.querySelector('[data-i="1"]').focus()}});}
+  function toU(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());return [Math.max(0,Math.min(10,(q.x-ox)/S)),Math.max(0,Math.min(7,(oy-q.y)/S))]}
+  svg.addEventListener('pointerdown',e=>{if(e.target.dataset&&e.target.dataset.i==='1'){drag=true;svg.setPointerCapture(e.pointerId);e.preventDefault()}});
+  svg.addEventListener('pointermove',e=>{if(drag){P[1]=toU(e);draw()}});
+  svg.addEventListener('pointerup',()=>drag=false);svg.style.touchAction='none';
+  draw();
+})();
+
+/* ---------- Eyebrow ---------- */
+(function(){
+  const N=[[0,0],[1,.35],[2,.6],[3,.75],[4,.8],[5,.6],[6,.2]],S=[[0,.5],[1,1.15],[2,1.6],[3,1.85],[4,1.8],[5,1.4],[6,.7]],F=[[.3,-.4],[1.2,0],[2.1,.4],[3,.7],[4,.85],[5,.65],[6,.25]];
+  const PH=[[N,S,'neutral to surprised'],[S,N,'surprised to neutral'],[N,F,'neutral to angry'],[F,N,'angry to neutral']];
+  const sx=x=>70+x*90,sy=y=>210-y*60,ease=u=>(1-Math.cos(Math.PI*u))/2;
+  const m={playing:!reduce,visible:true};let t=0,sel=3;
+  function pose(tt){tt=((tt%4)+4)%4;const i=Math.min(3,Math.floor(tt)),e=ease(tt-i),[A,B]=PH[i];return A.map((a,k)=>[a[0]+(B[k][0]-a[0])*e,a[1]+(B[k][1]-a[1])*e])}
+  let base='<defs><marker id="ear" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--vel)"/></marker><clipPath id="ecl"><rect width="680" height="340"/></clipPath></defs>';
+  for(let x=0;x<=6;x++)base+=`<line x1="${sx(x)}" y1="40" x2="${sx(x)}" y2="250" stroke="var(--rule)" stroke-width="0.6"/><text x="${sx(x)}" y="264" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">${x}</text>`;
+  for(let y=-1;y<=2;y++)base+=`<line x1="50" y1="${sy(y)}" x2="630" y2="${sy(y)}" stroke="var(--rule)" stroke-width="0.6"/><text x="44" y="${sy(y)+4}" text-anchor="end" style="font-size:11px;fill:var(--ink-3)">${y}</text>`;
+  base+=`<ellipse cx="340" cy="290" rx="150" ry="32" fill="none" stroke="var(--rule-2)" stroke-width="1.5"/><circle cx="340" cy="290" r="20" fill="none" stroke="var(--rule-2)" stroke-width="1.5"/><text x="14" y="22" style="font-size:12px;fill:var(--ink-3)">units: cm, origin at the inner end of the neutral brow</text>`;
+  const vb=$('e-vb');const opts={};for(let k=1;k<=5;k++)opts[k]={n:'γ'+k};const updB=seg(vb,opts,k=>+k==sel,k=>{sel=+k;draw()});
+  function draw(){const P=pose(t),h=0.002,Pa=pose(t-h),Pb=pose(t+h);const V=P.map((p,k)=>[(Pb[k][0]-Pa[k][0])/(2*h),(Pb[k][1]-Pa[k][1])/(2*h)]);
+    let s=base+'<g clip-path="url(#ecl)">';const c=cen(P[sel-1],P[sel],P[sel+1]);
+    if(c){const R=Math.hypot(c[0]-P[sel][0],c[1]-P[sel][1]);s+=`<circle cx="${sx(c[0])}" cy="${sy(c[1])}" r="${R*75}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="5 4"/><line x1="${sx(P[sel][0])}" y1="${sy(P[sel][1])}" x2="${sx(c[0])}" y2="${sy(c[1])}" stroke="var(--accent)"/><circle cx="${sx(c[0])}" cy="${sy(c[1])}" r="4" fill="var(--accent)"/>`}
+    s+='</g>'+`<polyline points="${P.map(p=>sx(p[0])+','+sy(p[1])).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    P.forEach((p,k)=>{const L=Math.hypot(V[k][0],V[k][1]);if(L>0.05)s+=`<line x1="${sx(p[0])}" y1="${sy(p[1])}" x2="${sx(p[0]+V[k][0]*.35)}" y2="${sy(p[1]+V[k][1]*.35)}" stroke="var(--vel)" stroke-width="2" marker-end="url(#ear)"/>`});
+    P.forEach((p,k)=>s+=`<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="${k==sel?6:4}" fill="${k==sel?'var(--accent)':'var(--panel)'}" stroke="var(--ink)" stroke-width="1.5"/><text x="${sx(p[0])}" y="${sy(p[1])-12}" text-anchor="middle" style="font-size:11px;fill:var(--ink-2)">γ${k}</text>`);
+    $('e-svg').innerHTML=s;
+    const cv=curv(P[sel-1],P[sel],P[sel+1]),ka=curv(Pa[sel-1],Pa[sel],Pa[sel+1]).k,kb=curv(Pb[sel-1],Pb[sel],Pb[sel+1]).k;
+    met($('e-met'),[['Selected vertex',`γ${sel} (${P[sel][0].toFixed(2)}, ${P[sel][1].toFixed(2)})`],['Curvature κ (1/cm)',cv.k.toFixed(3)],['Radius R (cm)',Math.abs(cv.k)<1e-4?'∞':(1/Math.abs(cv.k)).toFixed(2)],['dκ/dt (1/cm·s)',((kb-ka)/(2*h)).toFixed(3)]]);
+    $('e-tb').innerHTML=P.map((p,i)=>{let a='–',b='–';if(i>0&&i<6){const r=curv(P[i-1],P[i],P[i+1]);a=(r.phi/D).toFixed(1)+'°';b=r.k.toFixed(3)}return `<tr class="${i==sel?'sel':''}"><td>${i}</td><td>${p[0].toFixed(2)}</td><td>${p[1].toFixed(2)}</td><td>${V[i][0].toFixed(2)}</td><td>${V[i][1].toFixed(2)}</td><td>${Math.hypot(V[i][0],V[i][1]).toFixed(2)}</td><td>${a}</td><td>${b}</td></tr>`}).join('');
+    $('e-t').value=t.toFixed(2);$('e-tl').textContent=`t = ${t.toFixed(2)} s, ${PH[Math.min(3,Math.floor(t))][2]}`;updB()}
+  const upd=playBtn($('e-play'),m);
+  $('e-t').oninput=e=>{t=+e.target.value;m.playing=false;upd();draw()};
+  m.tick=dt=>{if(m.playing){t=(t+dt*0.6)%4;draw()}};m.el=$('eyebrow');mods.push(m);draw();
+})();
+
+/* ---------- Speed and prediction ---------- */
+(function(){
+  const G={walk:{n:'Walking',v:1.4,L:0.75,b:0.04},jog:{n:'Jogging',v:2.5,L:1.0,b:0.07},run:{n:'Running',v:4.5,L:1.4,b:0.09}};
+  const PR={c:{n:'Constant',a:0},u:{n:'Speeding up',a:0.3},d:{n:'Slowing down',a:-0.3}};
+  const m={playing:!reduce,visible:true};let g='jog',p='c',t=0;const T=10;
+  function st(tt){const v0=G[g].v,a=PR[p].a;if(a<0){const ts=v0/-a;if(tt>=ts)return {x:v0*v0/(-2*a),v:0,a:0}}return {x:v0*tt+0.5*a*tt*tt,v:v0+a*tt,a}}
+  function pred(s,dt){const a=s.a,v=s.v;if(a<0&&v/-a<dt)return {x:s.x+v*v/(-2*a),v:0};return {x:s.x+v*dt+0.5*a*dt*dt,v:v+a*dt}}
+  function phase(tt){const n=150;let ph=0;for(let i=0;i<n;i++){ph+=Math.PI*st(tt*(i+0.5)/n).v/G[g].L*tt/n}return ph}
+  const u1=seg($('r-gb'),G,k=>k==g,k=>{g=k;t=0;draw()}),u2=seg($('r-pb'),PR,k=>k==p,k=>{p=k;t=0;draw()});
+  function fig(x0,ph,bob,op,col){const hip=[x0,150-(0.95+bob)*70],sh=[x0,hip[1]-40],hd=[x0,sh[1]-14];const A=0.5*Math.sin(ph),B=-A;const leg=an=>{const kn=[hip[0]+Math.sin(an)*28,hip[1]+Math.cos(an)*28];const ft=[kn[0]+Math.sin(an-0.4*Math.abs(an))*28,kn[1]+Math.cos(an-0.4*Math.abs(an))*28];return `<polyline points="${hip} ${kn} ${ft}" fill="none"/>`};const arm=an=>`<line x1="${sh[0]}" y1="${sh[1]+4}" x2="${sh[0]+Math.sin(an)*26}" y2="${sh[1]+4+Math.cos(an)*26}"/>`;return `<g stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="${op}">${leg(A)}${leg(B)}${arm(-A)}${arm(-B)}<line x1="${hip[0]}" y1="${hip[1]}" x2="${sh[0]}" y2="${sh[1]}"/><circle cx="${hd[0]}" cy="${hd[1]}" r="9" fill="var(--panel)"/></g>`}
+  function plot(id,f,ymax,lab,cur,isX){const W=320,H=170,l=40,r=10,tp=16,bt=30;const X=tt=>l+(W-l-r)*tt/13,Y=y=>H-bt-(H-tp-bt)*y/ymax;let s=`<text x="${l}" y="11" style="font-size:12px;fill:var(--ink-2)">${lab}</text>`;for(let i=0;i<=13;i+=2)s+=`<line x1="${X(i)}" y1="${tp}" x2="${X(i)}" y2="${H-bt}" stroke="var(--rule)" stroke-width="0.6"/><text x="${X(i)}" y="${H-bt+14}" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">${i}</text>`;for(let k=0;k<=4;k++){const y=ymax*k/4;s+=`<line x1="${l}" y1="${Y(y)}" x2="${W-r}" y2="${Y(y)}" stroke="var(--rule)" stroke-width="0.6"/><text x="${l-5}" y="${Y(y)+4}" text-anchor="end" style="font-size:11px;fill:var(--ink-3)">${y.toFixed(ymax<10?1:0)}</text>`}s+=`<text x="${(W+l)/2}" y="${H-4}" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">time (s)</text>`;let a='',b='';for(let i=0;i<=60;i++){const tt=cur*i/60;a+=`${X(tt)},${Y(f(tt))} `}const s0=st(cur);for(let i=0;i<=30;i++){const dt=3*i/30,q=pred(s0,dt);b+=`${X(cur+dt)},${Y(isX?q.x:q.v)} `}s+=`<polyline points="${a}" fill="none" stroke="var(--blue)" stroke-width="2"/><polyline points="${b}" fill="none" stroke="var(--vel)" stroke-width="2" stroke-dasharray="5 4"/>`;for(let i=0;i<=Math.floor(cur);i++)s+=`<circle cx="${X(i)}" cy="${Y(f(i))}" r="2.5" fill="var(--blue)"/>`;s+=`<circle cx="${X(cur)}" cy="${Y(f(cur))}" r="4" fill="var(--blue)"/>`;$(id).innerHTML=s}
+  function draw(){const s=st(t),xmax=Math.max(8,pred(st(T),3).x),sx=x=>40+600*x/xmax,ph=phase(t),bob=G[g].b*(1-Math.cos(2*ph))/2;
+    let h=`<defs><marker id="rar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--blue)"/></marker></defs><line x1="30" y1="150" x2="650" y2="150" stroke="var(--rule-2)" stroke-width="1.5"/>`;
+    const step=xmax>40?10:xmax>15?5:2;for(let mm=0;mm<=xmax+0.01;mm+=step)h+=`<line x1="${sx(mm)}" y1="150" x2="${sx(mm)}" y2="158" stroke="var(--ink-3)"/><text x="${sx(mm)}" y="172" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">${mm} m</text>`;
+    [1,2,3].forEach(d=>{const q=pred(s,d);h+=fig(sx(q.x),ph+Math.PI*q.v/G[g].L*d,0,0.28,'var(--vel)')+`<text x="${sx(q.x)}" y="30" text-anchor="middle" style="font-size:11px;fill:var(--ink-2)">t+${d}s</text>`});
+    for(let i=0;i<=Math.floor(t);i++)h+=`<circle cx="${sx(st(i).x)}" cy="150" r="3" fill="var(--blue)"/>`;
+    h+=fig(sx(s.x),ph,bob,1,'var(--ink)');if(s.v>0.01)h+=`<line x1="${sx(s.x)}" y1="42" x2="${sx(s.x)+s.v*300/xmax}" y2="42" stroke="var(--blue)" stroke-width="2" marker-end="url(#rar)"/>`;
+    $('r-svg').innerHTML=h;
+    met($('r-met'),[['Position x (m)',s.x.toFixed(2)],['Hip height y (m)',(0.95+bob).toFixed(3)],['Speed v (m/s)',s.v.toFixed(2)],['Accel. a (m/s²)',s.a.toFixed(2)],['Cadence (steps/min)',Math.round(60*s.v/G[g].L)]]);
+    $('r-tb').innerHTML=[0.5,1,2,3].map(d=>{const q=pred(s,d);return `<tr><td>t + ${d} s</td><td>${(t+d).toFixed(2)}</td><td>${q.x.toFixed(2)}</td><td>${q.v.toFixed(2)}</td><td>${(q.x-s.x).toFixed(2)}</td></tr>`}).join('');
+    const xm=pred(st(T),3).x,vm=Math.max(st(0).v,st(T).v,pred(st(T),3).v)*1.15;
+    plot('r-px',tt=>st(tt).x,Math.ceil(xm/5)*5||5,'Position x(t), m',t,true);plot('r-pv',tt=>st(tt).v,Math.max(1,Math.ceil(vm)),'Speed v(t), m/s',t,false);
+    $('r-t').value=t;$('r-tl').textContent='t = '+t.toFixed(1)+' s';u1();u2()}
+  const upd=playBtn($('r-play'),m);$('r-rst').onclick=()=>{t=0;draw()};
+  $('r-t').oninput=e=>{t=+e.target.value;m.playing=false;upd();draw()};
+  m.tick=dt=>{if(m.playing){t+=dt;if(t>T)t=0;draw()}};m.el=$('speed');mods.push(m);draw();
+})();
+
+/* ---------- Hip path circles ---------- */
+(function(){
+  const g9=9.81,G={walk:{n:'Walking',v:1.4,L:0.75,l:0.95},jog:{n:'Jogging',v:2.5,L:1.0,sig:0.55,h0:0.92},run:{n:'Running',v:4.5,L:1.4,sig:0.4,h0:0.92}};
+  const m={playing:false,visible:true};let gn='walk',sel=5,all=false,acc=0;
+  function hip(t){const p=G[gn],T=p.L/p.v,x=p.v*t;if(gn=='walk'){let u=(x%p.L)-p.L/2;return {pt:[x,Math.sqrt(p.l*p.l-u*u)],foot:x-u,st:true}}const s=((t%T)+T)%T/T,Ts=p.sig*T,Tf=(1-p.sig)*T,d=g9*Tf*Ts/(2*Math.PI);if(s<p.sig)return {pt:[x,p.h0-d*Math.sin(Math.PI*s/p.sig)],foot:x-(s-p.sig/2)*T*p.v,st:true};const tau=(s-p.sig)*T;return {pt:[x,p.h0+g9/2*tau*(Tf-tau)],st:false}}
+  const col=k=>Math.abs(k)>4?'var(--warn)':k<0?'var(--neg)':'var(--pos)';
+  const u1=seg($('p-gb'),G,k=>k==gn,k=>{gn=k;draw()});
+  function draw(){const p=G[gn],T=p.L/p.v,H=Array.from({length:21},(_,i)=>hip(T*i/10)),P=H.map(h=>h.pt),W=2*p.L,s=Math.min(620/W,320/1.15),X=x=>30+x*s,Y=y=>330-y*s;
+    let h=`<defs><clipPath id="pcl"><rect width="680" height="350"/></clipPath></defs><line x1="20" y1="${Y(0)}" x2="660" y2="${Y(0)}" stroke="var(--rule-2)" stroke-width="1.5"/>`;
+    for(let mm=0;mm<=W+1e-6;mm+=0.25)h+=`<line x1="${X(mm)}" y1="${Y(0)}" x2="${X(mm)}" y2="${Y(0)+5}" stroke="var(--ink-3)"/>`+(Math.abs(mm*2-Math.round(mm*2))<1e-6?`<text x="${X(mm)}" y="${Y(0)+17}" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">${mm.toFixed(1)} m</text>`:'');
+    const K=[];for(let i=1;i<20;i++)K[i]=curv(P[i-1],P[i],P[i+1]);
+    const circ=(i,strong)=>{const c=cen(P[i-1],P[i],P[i+1]);if(!c)return '';const R=Math.hypot(c[0]-P[i][0],c[1]-P[i][1]),cl=col(K[i].k);return `<circle cx="${X(c[0])}" cy="${Y(c[1])}" r="${R*s}" fill="none" stroke="${cl}" stroke-width="${strong?2:0.8}" opacity="${strong?1:0.35}" ${strong?'stroke-dasharray="6 4"':''}/>`+(strong?`<line x1="${X(P[i][0])}" y1="${Y(P[i][1])}" x2="${X(c[0])}" y2="${Y(c[1])}" stroke="${cl}"/><circle cx="${X(c[0])}" cy="${Y(c[1])}" r="4" fill="${cl}"/>`:'')};
+    h+='<g clip-path="url(#pcl)">';if(all)for(let i=1;i<20;i++)if(i!=sel)h+=circ(i,false);h+=circ(sel,true)+'</g>';
+    const q=H[sel],hx=X(q.pt[0]),hy=Y(q.pt[1]);
+    if(q.st)h+=`<line x1="${hx}" y1="${hy}" x2="${X(q.foot)}" y2="${Y(0)}" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/>`;else h+=`<polyline points="${hx},${hy} ${hx+0.25*s},${hy+0.3*s} ${hx+0.05*s},${hy+0.55*s}" fill="none" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/><polyline points="${hx},${hy} ${hx-0.2*s},${hy+0.35*s} ${hx-0.4*s},${hy+0.5*s}" fill="none" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/>`;
+    h+=`<line x1="${hx}" y1="${hy}" x2="${hx}" y2="${hy-0.5*s}" stroke="var(--ink-2)" stroke-width="3" stroke-linecap="round"/><circle cx="${hx}" cy="${hy-0.62*s}" r="${0.1*s}" fill="var(--panel)" stroke="var(--ink-2)" stroke-width="2.5"/>`;
+    let sm='';for(let i=0;i<=200;i++){const r=hip(T*2*i/200).pt;sm+=`${X(r[0])},${Y(r[1])} `}h+=`<polyline points="${sm}" fill="none" stroke="var(--rule-2)"/><polyline points="${P.map(r=>X(r[0])+','+Y(r[1])).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    P.forEach((r,i)=>{const cl=i>0&&i<20?col(K[i].k):'var(--ink-3)';h+=`<circle cx="${X(r[0])}" cy="${Y(r[1])}" r="${i==sel?5.5:3}" fill="${i==sel?cl:'var(--panel)'}" stroke="${cl}" stroke-width="1.5"/>`});
+    [sel-1,sel,sel+1].forEach((i,j)=>h+=`<text x="${X(P[i][0])}" y="${Y(P[i][1])-12-(j==1?6:0)}" text-anchor="middle" style="font-size:11px;fill:var(--ink-2)">γ${i}</text>`);
+    $('p-svg').innerHTML=h;
+    const kk=K[sel],c=cen(P[sel-1],P[sel],P[sel+1]);
+    met($('p-met'),[['Vertex γₖ (x, y) m',`(${q.pt[0].toFixed(3)}, ${q.pt[1].toFixed(3)})`],['Turning angle φ',(kk.phi/D).toFixed(2)+'°'],['Curvature κ (1/m)',kk.k.toFixed(3)],['Radius R (m)',Math.abs(kk.k)<0.02?'≈ ∞':(1/Math.abs(kk.k)).toFixed(2)],['Centre (m)',c?`(${c[0].toFixed(2)}, ${c[1].toFixed(2)})`:'none']]);
+    let n;if(gn=='walk')n=Math.abs(kk.k)>4?'Step-to-step transition: the path has a corner, so the circle is tiny. This is where walking loses energy as the new leg strikes the ground.':'Single stance: the hip vaults over a straight leg like an inverted pendulum. The circle’s centre sits on the foot, and R = 0.95 m is the leg length.';else{const kf=g9/(p.v*p.v);n=Math.abs(kk.k)<0.2?'Touchdown or take-off: the path is nearly straight here, so the circle is very large.':kk.k>0?'Stance: the leg compresses like a spring, so the hip dips and the circle’s centre is above the path.':`Flight: the body is in free fall, so the path is a parabola with κ ≈ g ⁄ v² = ${kf.toFixed(2)} 1/m (R ≈ ${(1/kf).toFixed(2)} m).`}
+    $('p-note').textContent=n;
+    const bw=600/19,km=gn=='walk'?9:2.2,z=85,ks=70/km;let b=`<line x1="40" y1="${z}" x2="660" y2="${z}" stroke="var(--rule-2)"/><text x="40" y="12" style="font-size:12px;fill:var(--ink-2)">Discrete curvature κₖ at each vertex (1/m); tap a bar to select it</text>`;
+    [km,km/2,-km/2,-km].forEach(v=>b+=`<text x="34" y="${z-v*ks+4}" text-anchor="end" style="font-size:11px;fill:var(--ink-3)">${v.toFixed(1)}</text><line x1="40" y1="${z-v*ks}" x2="660" y2="${z-v*ks}" stroke="var(--rule)" stroke-width="0.6"/>`);
+    for(let i=1;i<20;i++){const v=Math.max(-km,Math.min(km,K[i].k)),x=40+(i-0.5)*bw+4,y0=v>0?z-v*ks:z;b+=`<rect x="${x}" y="${y0}" width="${bw-8}" height="${Math.max(1,Math.abs(v)*ks)}" fill="${col(K[i].k)}" opacity="${i==sel?1:0.5}" rx="2" style="cursor:pointer" data-i="${i}"/><text x="${x+(bw-8)/2}" y="160" text-anchor="middle" style="font-size:11px;fill:${i==sel?'var(--ink)':'var(--ink-3)'}">${i}</text>`}
+    const kb=$('p-kb');kb.innerHTML=b;kb.querySelectorAll('rect[data-i]').forEach(r=>r.onclick=()=>{sel=+r.dataset.i;draw()});
+    $('p-v').value=sel;$('p-vl').textContent='γ'+sel;$('p-all').setAttribute('aria-pressed',String(all));u1()}
+  playBtn($('p-play'),m);$('p-v').oninput=e=>{sel=+e.target.value;draw()};$('p-all').onclick=()=>{all=!all;draw()};
+  m.tick=dt=>{if(m.playing){acc+=dt;if(acc>0.45){acc=0;sel=sel>=19?1:sel+1;draw()}}};m.el=$('hip');mods.push(m);draw();
+})();
+
+/* ---------- Limb joints ---------- */
+(function(){
+  const GA={walk:{n:'Walking',v:1.4,At:25,k0:5,K:60,ks:8,Aa:20,el:15,lean:3,b:0.05,run:false},jog:{n:'Jogging',v:2.5,At:32,k0:15,K:85,ks:20,Aa:30,el:80,lean:6,b:0.07,run:true},run:{n:'Running',v:4.5,At:40,k0:20,K:110,ks:22,Aa:45,el:90,lean:10,b:0.09,run:true}};
+  const J={foot:{n:'Foot (ankle)',c:'var(--c-foot)'},knee:{n:'Knee',c:'var(--c-knee)'},hand:{n:'Hand (wrist)',c:'var(--c-hand)'},hip:{n:'Hip (body)',c:'var(--c-hip)'}};
+  const Lt=0.45,Ls=0.45,Lu=0.30,Lf=0.27,Ltr=0.50,N=16;
+  const m={playing:!reduce,visible:true};let gn='walk',view='tread',on={foot:true,knee:true,hand:true,hip:true},t=0,rate=0.2;
+  function P(){const p=GA[gn],kms=(p.k0+p.ks)*D,ll=Math.sqrt(Lt*Lt+Ls*Ls+2*Lt*Ls*Math.cos(kms));return {p,H:p.run?ll+p.b/2:ll-p.b/2,T:4*ll*Math.sin(p.At*D)/p.v}}
+  function leg(th,hip,p){const tA=p.At*D*Math.sin(th),kn=(p.k0+p.K*Math.pow((1+Math.cos(th))/2,2)+p.ks*Math.pow((1-Math.cos(th))/2,4))*D;const knee=[hip[0]+Lt*Math.sin(tA),hip[1]-Lt*Math.cos(tA)],a=tA-kn,ank=[knee[0]+Ls*Math.sin(a),knee[1]-Ls*Math.cos(a)];return {knee,ank,toe:[ank[0]+0.16*Math.cos(a),ank[1]+0.16*Math.sin(a)]}}
+  function arm(th,sh,p){const s=-p.Aa*D*Math.sin(th),e=(p.el+8*Math.sin(th))*D,el=[sh[0]+Lu*Math.sin(s),sh[1]-Lu*Math.cos(s)];return {el,wr:[el[0]+Lf*Math.sin(s+e),el[1]-Lf*Math.cos(s+e)]}}
+  function pose(tt){const {p,H,T}=P(),th=2*Math.PI*tt/T,bob=(p.run?-1:1)*p.b/2*Math.cos(2*th),off=view=='ground'?p.v*tt:0,hip=[off+0.02*Math.sin(2*th),H+bob],lr=p.lean*D,sh=[hip[0]+Ltr*Math.sin(lr),hip[1]+Ltr*Math.cos(lr)];return {hip,sh,head:[sh[0]+0.2*Math.sin(lr),sh[1]+0.2*Math.cos(lr)],R:leg(th,hip,p),L:leg(th+Math.PI,hip,p),RA:arm(th,sh,p),LA:arm(th+Math.PI,sh,p)}}
+  const jp=(o,j)=>j=='foot'?o.R.ank:j=='knee'?o.R.knee:j=='hand'?o.RA.wr:o.hip;
+  const u1=seg($('l-gb'),GA,k=>k==gn,k=>{gn=k;t=0;draw()}),u2=seg($('l-vb'),{tread:{n:'Treadmill (relative to body)'},ground:{n:'Ground (moving forward)'}},k=>k==view,k=>{view=k;t=0;draw()}),u3=seg($('l-jb'),J,k=>on[k],k=>{on[k]=!on[k];draw()});
+  function draw(){const {T}=P(),o=pose(t),s=190,cam=view=='ground'?o.hip[0]:0,X=x=>340+(x-cam)*s,Y=y=>335-y*s;
+    let h=`<defs><clipPath id="lcl"><rect width="680" height="360"/></clipPath></defs><line x1="0" y1="${Y(0)}" x2="680" y2="${Y(0)}" stroke="var(--rule-2)" stroke-width="1.5"/>`;
+    if(view=='ground'){const st=Math.floor((cam-2)/0.5)*0.5;for(let mm=st;mm<cam+2;mm+=0.5)h+=`<line x1="${X(mm)}" y1="${Y(0)}" x2="${X(mm)}" y2="${Y(0)+6}" stroke="var(--ink-3)"/><text x="${X(mm)}" y="${Y(0)+18}" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)">${mm.toFixed(1)}</text>`}
+    const k=Math.round(t/T*N),rows=[];h+='<g clip-path="url(#lcl)">';
+    Object.keys(J).forEach(j=>{if(!on[j])return;const idx=view=='tread'?Array.from({length:N+1},(_,i)=>i):Array.from({length:N+2},(_,i)=>k-N+i);const pts=idx.map(i=>jp(pose(T*i/N),j));
+      h+=`<polyline points="${pts.map(q=>X(q[0])+','+Y(q[1])).join(' ')}" fill="none" stroke="${J[j].c}" stroke-width="1.2" opacity="0.7"/>`;pts.forEach(q=>h+=`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="2.2" fill="${J[j].c}" opacity="0.7"/>`);
+      const a=jp(pose(T*(k-1)/N),j),b=jp(pose(T*k/N),j),c=jp(pose(T*(k+1)/N),j),cv=curv(a,b,c),sp=Math.hypot(c[0]-a[0],c[1]-a[1])/(2*T/N);let R='–',cc=null;
+      if(!cv.deg&&Math.abs(cv.k)>0.02){cc=cen(a,b,c);R=Math.abs(1/cv.k).toFixed(3)}
+      if(cc)h+=`<circle cx="${X(cc[0])}" cy="${Y(cc[1])}" r="${Math.abs(1/cv.k)*s}" fill="none" stroke="${J[j].c}" stroke-width="1.8" stroke-dasharray="5 4"/><line x1="${X(b[0])}" y1="${Y(b[1])}" x2="${X(cc[0])}" y2="${Y(cc[1])}" stroke="${J[j].c}" stroke-width="0.8"/><circle cx="${X(cc[0])}" cy="${Y(cc[1])}" r="3" fill="${J[j].c}"/>`;
+      [a,c].forEach(q=>h+=`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="3.5" fill="var(--panel)" stroke="${J[j].c}" stroke-width="1.5"/>`);h+=`<circle cx="${X(b[0])}" cy="${Y(b[1])}" r="5.5" fill="${J[j].c}" stroke="var(--panel)" stroke-width="1.5"/>`;
+      rows.push(`<tr><td><span class="dot" style="background:${J[j].c}"></span>${J[j].n}</td><td>${b[0].toFixed(3)}</td><td>${b[1].toFixed(3)}</td><td>${sp.toFixed(2)}</td><td>${cv.deg?'–':(cv.phi/D).toFixed(1)+'°'}</td><td>${cv.deg?'planted':cv.k.toFixed(2)}</td><td>${cv.deg?'–':R}</td></tr>`)});
+    h+='</g>';
+    const ln=(a,b,w,c)=>`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+    const lim=(lg,am,c)=>ln(o.hip,lg.knee,5,c)+ln(lg.knee,lg.ank,5,c)+ln(lg.ank,lg.toe,4,c)+ln(o.sh,am.el,4,c)+ln(am.el,am.wr,4,c);
+    h+=lim(o.L,o.LA,'var(--rule-2)')+ln(o.hip,o.sh,6,'var(--ink)')+lim(o.R,o.RA,'var(--ink)')+`<circle cx="${X(o.head[0])}" cy="${Y(o.head[1])}" r="${0.11*s}" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>`;
+    h+=`<text x="12" y="20" style="font-size:12px;fill:var(--ink-2)">vertex γ${((k%N)+N)%N} of ${N} per stride, t = ${t.toFixed(2)} s, stride time ${T.toFixed(2)} s</text>`;
+    $('l-svg').innerHTML=h;$('l-tb').innerHTML=rows.join('')||'<tr><td colspan="7">Choose at least one joint to track.</td></tr>';
+    $('l-info').textContent=view=='tread'?'Treadmill view: each joint is measured relative to the moving body, so its path is a closed loop repeated every stride.':'Ground view: real paths over the ground. A planted foot stays still, so neighbouring vertices coincide and no circle exists there.';
+    $('l-spl').textContent=rate.toFixed(2)+'×';u1();u2();u3()}
+  const upd=playBtn($('l-play'),m);
+  const stepV=d=>{m.playing=false;upd();const {T}=P();t=Math.max(0,(Math.round(t/T*N)+d)*T/N);draw()};
+  $('l-prev').onclick=()=>stepV(-1);$('l-next').onclick=()=>stepV(1);$('l-sp').oninput=e=>{rate=+e.target.value;draw()};
+  m.tick=dt=>{if(m.playing){t+=dt*rate;if(t>60)t=0;draw()}};m.el=$('limbs');mods.push(m);draw();
+})();
+
+/* ---------- Visibility, nav highlight, loop ---------- */
+if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(e=>{const md=mods.find(q=>q.el===e.target);if(md)md.visible=e.isIntersecting}),{rootMargin:'100px'});mods.forEach(q=>io.observe(q.el));
+  const links=[...document.querySelectorAll('nav.side a')];const io2=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id))}}),{rootMargin:'-40% 0px -55% 0px'});document.querySelectorAll('#circle,section[id]').forEach(s=>io2.observe(s))}
+let last=null;function loop(ts){const dt=last==null?0:Math.min(0.1,(ts-last)/1000);last=ts;mods.forEach(q=>{if(q.visible)q.tick(dt)});requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
